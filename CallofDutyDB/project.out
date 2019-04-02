@@ -1,0 +1,918 @@
+SQL> /*
+SQL> CIS 353 Section 01- Call of Duty Tournament Database Design Project
+SQL> Team 03
+SQL> Trungvuong Pham
+SQL> Carson Uecker-Herman
+SQL> Nate Wichman
+SQL> Atone Joryman
+SQL> */
+SQL> --
+SQL> -- Drop any pre-existing tables if present.
+SQL> --
+SQL> DROP TABLE Team CASCADE CONSTRAINTS;
+
+Table dropped.
+
+SQL> DROP TABLE Player CASCADE CONSTRAINTS;
+
+Table dropped.
+
+SQL> DROP TABLE Weapons CASCADE CONSTRAINTS;
+
+Table dropped.
+
+SQL> DROP TABLE Venue CASCADE CONSTRAINTS;
+
+Table dropped.
+
+SQL> DROP TABLE Match CASCADE CONSTRAINTS;
+
+Table dropped.
+
+SQL> DROP TABLE Weapon_Accessories CASCADE CONSTRAINTS;
+
+Table dropped.
+
+SQL> DROP TABLE Uses CASCADE CONSTRAINTS;
+
+Table dropped.
+
+SQL> --
+SQL> /*
+SQL> < The SQL/DDL code that creates your schema >
+SQL> In the DDL, every IC must have a unique name; e.g. IC5, IC10, IC15, etc.
+SQL> */
+SQL> --
+SQL> -- Create new tables
+SQL> -- -----------------------------------------------------------------------------
+SQL> CREATE TABLE Team (
+  2    tID   INTEGER PRIMARY KEY NOT NULL,
+  3    tName CHAR(20) NOT NULL,
+  4    numMembers INTEGER,
+  5    seed INTEGER NOT NULL,
+  6  -- tIC1: The team ID and team name is unique
+  7  CONSTRAINT tIC1 UNIQUE(tID, tName),
+  8  -- tIC2: The team must have between 4 and 6 players
+  9  CONSTRAINT tIC2 CHECK (numMembers >= 4 AND numMembers <= 6),
+ 10  -- tIC3: There are only 6 teams participating in this tournament
+ 11  CONSTRAINT tIC3 CHECK(tID >= 1 AND tID <= 6),
+ 12  -- tIC4: Seed references the team ID
+ 13  CONSTRAINT tIC4 FOREIGN KEY (seed) REFERENCES Team(tID)
+ 14  		 ON DELETE CASCADE
+ 15  		 DEFERRABLE INITIALLY DEFERRED
+ 16  );
+
+Table created.
+
+SQL> --
+SQL> -- -----------------------------------------------------------------------------
+SQL> CREATE TABLE Player (
+  2    pID   CHAR(25) NOT NULL,
+  3    pTeam CHAR(20) NOT NULL,
+  4    pAge  CHAR(5),
+  5    pName CHAR(20) NOT NULL,
+  6    tID  INTEGER NOT NULL,
+  7    role CHAR(15),
+  8  --
+  9  -- pIC1: Player id is unique
+ 10  CONSTRAINT pIC1 PRIMARY KEY(pID, pTeam),
+ 11  -- pIC2: No two players can have the same name and be on the same team
+ 12  CONSTRAINT pIC2 UNIQUE(pName, pTeam),
+ 13  -- pIC3: pTeam is a foreign key to tName in the Team tables
+ 14  CONSTRAINT pIC3 FOREIGN KEY (tID) REFERENCES Team(tID)
+ 15  		 ON DELETE CASCADE
+ 16  				   DEFERRABLE INITIALLY DEFERRED
+ 17  );
+
+Table created.
+
+SQL> --
+SQL> -- -----------------------------------------------------------------------------
+SQL> CREATE TABLE Weapons (
+  2    wName CHAR(15) PRIMARY KEY NOT NULL,
+  3    wType CHAR(16),
+  4    accessories CHAR(50),
+  5  --
+  6  -- wIC1: Weapon type and weapon names are all unique
+  7  CONSTRAINT wIC1 UNIQUE(wName, wType),
+  8  -- wIC2: Checks for valid gun types
+  9  CONSTRAINT wIC2 CHECK(wType IN('Assault Rifle', 'Submachine Gun', 'Sniper Rifle'))
+ 10  );
+
+Table created.
+
+SQL> --
+SQL> -- -----------------------------------------------------------------------------
+SQL> CREATE TABLE Venue (
+  2    vID   INTEGER NOT NULL PRIMARY KEY,
+  3    location  CHAR(25) NOT NULL,
+  4    capacity  INTEGER,
+  5  --
+  6  -- vIC1: Check for valid venue locations for matches
+  7  CONSTRAINT vIC1 CHECK(location IN('Anaheim', 'Las Vegas', 'Philadelphia', 'New York City')),
+  8  -- vIC2: 2 attributes 1 row: Checks the capacity of New York City to be <= 30000
+  9  CONSTRAINT vIC2 CHECK(location != 'New York City' OR capacity >= 30000)
+ 10  );
+
+Table created.
+
+SQL> --
+SQL> -- -----------------------------------------------------------------------------
+SQL> CREATE TABLE Match (
+  2    tID1 INTEGER,
+  3    tID2 INTEGER,
+  4    mDate DATE,
+  5    mTime CHAR(10),
+  6    attendance INTEGER,
+  7    score1 INTEGER,
+  8    score2 INTEGER,
+  9    vID INTEGER NOT NULL,
+ 10  --
+ 11  -- mIC1:The team Ids of two teams and the date of match are unique
+ 12  CONSTRAINT mIC1 PRIMARY KEY(tID1, tID2, mDate),
+ 13  -- mIC2: vID references the venue ID from the Venue table
+ 14  CONSTRAINT mIC2 FOREIGN KEY (vID) REFERENCES Venue(vID)
+ 15  		 ON DELETE CASCADE
+ 16  		 DEFERRABLE INITIALLY DEFERRED,
+ 17  -- mIC3: Check that when the vID is 101 the attendance is at capacity
+ 18  CONSTRAINT mIC3 CHECK(NOT(vID = 101 AND attendance >= 15000))
+ 19  );
+
+Table created.
+
+SQL> --
+SQL> -- -----------------------------------------------------------------------------
+SQL> CREATE TABLE Weapon_Accessories (
+  2    wName CHAR(15),
+  3    accessories   CHAR(25),
+  4    wNum  INTEGER,
+  5  --
+  6  --aIC1: Weapon name and accessories are unique
+  7  CONSTRAINT aIC1 PRIMARY KEY(wName, accessories),
+  8  -- aIC2: Only 28 confirmed weapons usable in Tournament
+  9  CONSTRAINT aIC2 CHECK(wNum >= 1 AND wNum <= 28)
+ 10  );
+
+Table created.
+
+SQL> --
+SQL> -- -----------------------------------------------------------------------------
+SQL> CREATE TABLE USES (
+  2    pID CHAR(25) NOT NULL,
+  3    wName CHAR(15),
+  4    wNum INTEGER,
+  5  --
+  6  -- uIC1: The player ID and weapon name are unique
+  7  CONSTRAINT uIC1 UNIQUE(pID, wName)
+  8  );
+
+Table created.
+
+SQL> --
+SQL> SET FEEDBACK OFF
+SQL> --
+SQL> /*  The INSERT statements that populate the table
+SQL> */
+SQL> --
+SQL> -- Team Table inserts
+SQL> INSERT INTO Team VALUES (1, 'Team Awesome', 4, 4);
+SQL> INSERT INTO Team VALUES (2, 'Ultra Instinct', 4, 6);
+SQL> INSERT INTO Team VALUES (3, 'Children of God', 5, 5);
+SQL> INSERT INTO Team VALUES (4, 'TrickStars', 6, 1);
+SQL> INSERT INTO Team VALUES (5, 'UniqueGaming', 4, 2);
+SQL> INSERT INTO Team VALUES (6, 'BitterGaming', 4, 3);
+SQL> --
+SQL> -- Player Table inserts
+SQL> INSERT INTO Player VALUES('HufflePuff', 'Team Awesome', 22, 'Trevor James', 1, 'Captain');
+SQL> INSERT INTO Player VALUES('AznPersuasion', 'Team Awesome', 20, 'Kevin Lin', 1, 'Support');
+SQL> INSERT INTO Player VALUES('NoobSlayer', 'Team Awesome', 19, 'Josh Front', 1, 'Slayer');
+SQL> INSERT INTO Player VALUES('DoughBoy', 'Team Awesome', 18, 'Micah Danah', 1, 'Objective');
+SQL> INSERT INTO Player VALUES('SSGodGoku', 'Ultra Instinct', 22, 'Akira Toriyama', 2, 'Captain');
+SQL> INSERT INTO Player VALUES('SSGodVegeta', 'Ultra Instinct', 19, 'Dan Shisuki', 2, 'Objective');
+SQL> INSERT INTO Player VALUES('LordBeerus', 'Ultra Instinct', 18, 'Sam Sizuki', 2, 'Support');
+SQL> INSERT INTO Player VALUES('WhisMaster', 'Ultra Instinct', 19, 'Kyle Takanawa', 2, 'Slayer');
+SQL> INSERT INTO Player VALUES('Crimson_Chin', 'Children of God', 21, 'Carlos Davila', 3, 'Coach');
+SQL> INSERT INTO Player VALUES('BasedGod', 'Children Of God', 19, 'Bob Gordon', 3, 'Captain');
+SQL> INSERT INTO Player VALUES('ReignGod', 'Children Of God', 20, 'Karl Thornapple', 3, 'Slayer');
+SQL> INSERT INTO Player VALUES('PceMaker', 'Children Of God', 19, 'Casey Jimenez', 3, 'Objective');
+SQL> INSERT INTO Player VALUES('KillMonger', 'Children Of God', 22, 'Chris Smith', 3,  'Support');
+SQL> INSERT INTO Player VALUES('RelicStar', 'TrickStars', 25, 'David Martinez', 4, 'Coach');
+SQL> INSERT INTO Player VALUES('NightStar', 'TrickStars', 24, 'Gregory Nelson', 4, 'Co-Captain');
+SQL> INSERT INTO Player VALUES('DeathStar', 'TrickStars', 24, 'Seth Palmer', 4, 'Co-Captain');
+SQL> INSERT INTO Player VALUES('ReamStar', 'TrickStars', 23, 'Sam Smith', 4, 'Support');
+SQL> INSERT INTO Player VALUES('MoonStar', 'TrickStars', 22, 'Logan Wreath', 4, 'Objective');
+SQL> INSERT INTO Player VALUES('GenoStar', 'TrickStars', 19, 'Kevin Garner', 4, 'Slayer');
+SQL> INSERT INTO Player VALUES('Unique_Epsilon', 'UniqueGaming', 20, 'Conrad Newman', 5, 'Captain');
+SQL> INSERT INTO Player VALUES('Unique_Merciless', 'UniqueGaming', 21, 'Joe Puma', 5, 'Slayer');
+SQL> INSERT INTO Player VALUES('Unique_Heartless', 'UniqueGaming', 22, 'Trung Pham', 5, 'Objective');
+SQL> INSERT INTO Player VALUES('Unique_Sorrow', 'UniqueGaming', 21, 'Thao Phan', 5, 'Slayer');
+SQL> INSERT INTO Player VALUES('BitterTetra', 'BitterGaming', 18, 'Edward Elric', 6, 'Captain');
+SQL> INSERT INTO Player VALUES('Bitter_Vision', 'BitterGaming', 20, 'Brandon Nguyen', 6, 'Slayer');
+SQL> INSERT INTO Player VALUES('BitterGhost', 'BitterGaming', 22, 'Jubentino Cifuentes', 6, 'Objective');
+SQL> INSERT INTO Player VALUES('BitterSweet', 'BitterGaming', 23, 'Joshua Norton', 6, 'Support');
+SQL> --
+SQL> -- Weapons Table Insert
+SQL> INSERT INTO Weapons VALUES('M1-Garand', 'Assault Rifle', 'Red Dot Sight, Quickdraw, and Stock');
+SQL> INSERT INTO Weapons VALUES('BAR', 'Assault Rifle', 'Extended Mag, Foregrip, and Stock');
+SQL> INSERT INTO Weapons VALUES('M1A1 Carbine', 'Assault Rifle', 'Silencer, Foregrip, and Extended Mag');
+SQL> INSERT INTO Weapons VALUES('FG-42', 'Assault Rifle', 'Red Dot Sight, Bayonet, and Quickdraw ');
+SQL> INSERT INTO Weapons VALUES('Grease Gun', 'Submachine Gun', 'Red Dot Sight and Stock');
+SQL> INSERT INTO Weapons VALUES('PPSH-41', 'Submachine Gun', 'Quickdraw, Foregrip, and Stock');
+SQL> INSERT INTO Weapons VALUES('Type 100', 'Submachine Gun', 'Quickdraw, Silencer, and Foregrip');
+SQL> INSERT INTO Weapons VALUES('MP-40', 'Submachine Gun', 'Extended Mag, High Caliber Bullets, and Stock');
+SQL> INSERT INTO Weapons VALUES('Lee Enfield', 'Sniper Rifle', '4x Optic and Advanced Rifling');
+SQL> INSERT INTO Weapons VALUES('M1903', 'Sniper Rifle', '6x Optic and Advanced Rifling');
+SQL> INSERT INTO Weapons VALUES('Kar98k', 'Sniper Rifle', '4x Optic');
+SQL> --
+SQL> -- Venue Table inserts
+SQL> INSERT INTO Venue VALUES(101, 'Anaheim', 15000);
+SQL> INSERT INTO Venue VALUES(102, 'Las Vegas', 20000);
+SQL> INSERT INTO Venue VALUES(103, 'Philadelphia', 25000);
+SQL> INSERT INTO Venue VALUES(104, 'New York City', 30000);
+SQL> --
+SQL> -- Match Table inserts
+SQL> INSERT INTO Match VALUES(1, 2, '07-APR-18', '10:00am', 10000, 2, 4, 101);
+SQL> INSERT INTO Match VALUES(3, 4, '08-APR-18', '12:00pm', 12000, 1, 4, 101);
+SQL> INSERT INTO Match VALUES(5, 6, '10-APR-18', '12:00pm', 17000, 4, 3, 102);
+SQL> INSERT INTO Match VALUES(2, 4, '11-APR-18', '12:00pm', 23000, 4, 0, 103);
+SQL> INSERT INTO Match VALUES(2, 5, '12-APR-18', '5:00pm', 30000, 4, 3, 104);
+SQL> --
+SQL> -- Weapon_Accessories inserts
+SQL> INSERT INTO Weapon_Accessories VALUES('M1-Garand', 'Red Dot Sight', 1);
+SQL> INSERT INTO Weapon_Accessories VALUES('M1-Garand', 'Quickdraw', 2);
+SQL> INSERT INTO Weapon_Accessories VALUES('M1-Garand', 'Stock', 3);
+SQL> INSERT INTO Weapon_Accessories VALUES('BAR', 'Extended Mag', 4);
+SQL> INSERT INTO Weapon_Accessories VALUES('BAR', 'Foregrip', 5);
+SQL> INSERT INTO Weapon_Accessories VALUES('BAR', 'Stock', 6);
+SQL> INSERT INTO Weapon_Accessories VALUES('M1A1 Carbine', 'Silencer, Foregrip', 7);
+SQL> INSERT INTO Weapon_Accessories VALUES('M1A1 Carbine', 'Foregrip', 8);
+SQL> INSERT INTO Weapon_Accessories VALUES('M1A1 Carbine', 'Extended Mag', 9);
+SQL> INSERT INTO Weapon_Accessories VALUES('FG-42', 'Red Dot Sight', 10);
+SQL> INSERT INTO Weapon_Accessories VALUES('FG-42', 'Bayonet', 11);
+SQL> INSERT INTO Weapon_Accessories VALUES('FG-42', 'Quickdraw', 12);
+SQL> INSERT INTO Weapon_Accessories VALUES('Grease Gun', 'Red Dot Sight', 13);
+SQL> INSERT INTO Weapon_Accessories VALUES('Grease Gun', 'Stock', 14);
+SQL> INSERT INTO Weapon_Accessories VALUES('PPSH-41', 'Quickdraw', 15);
+SQL> INSERT INTO Weapon_Accessories VALUES('PPSH-41', 'Foregrip', 16);
+SQL> INSERT INTO Weapon_Accessories VALUES('PPSH-41', 'Stock', 17);
+SQL> INSERT INTO Weapon_Accessories VALUES('Type 100', 'Quickdraw', 18);
+SQL> INSERT INTO Weapon_Accessories VALUES('Type 100', 'Silencer', 19);
+SQL> INSERT INTO Weapon_Accessories VALUES('Type 100', 'Foregrip', 20);
+SQL> INSERT INTO Weapon_Accessories VALUES('MP-40', 'Extended Mag', 21);
+SQL> INSERT INTO Weapon_Accessories VALUES('MP-40', 'High Caliber Bullets', 22);
+SQL> INSERT INTO Weapon_Accessories VALUES('MP-40', 'Stock', 23);
+SQL> INSERT INTO Weapon_Accessories VALUES('Lee Enfield', '4x Optic', 24);
+SQL> INSERT INTO Weapon_Accessories VALUES('Lee Enfield', 'Advanced Rifling', 25);
+SQL> INSERT INTO Weapon_Accessories VALUES('M1903', '6x Optic', 26);
+SQL> INSERT INTO Weapon_Accessories VALUES('M1903', 'Advanced Rifling', 27);
+SQL> INSERT INTO Weapon_Accessories VALUES('Kar98k', '4x Optic', 28);
+SQL> --
+SQL> -- Uses Table inserts
+SQL> INSERT INTO Uses VALUES('Hufflepuff', 'Type 100', 19);
+SQL> INSERT INTO Uses VALUES('AznPersuasion', 'PPSH-41', 17);
+SQL> INSERT INTO Uses VALUES('NoobSlayer', 'BAR', 6);
+SQL> INSERT INTO Uses VALUES('DoughBoy', 'BAR', 5);
+SQL> INSERT INTO Uses VALUES('SSGodGoku', 'FG-42', 11);
+SQL> INSERT INTO Uses VALUES('SSGodVegeta', 'FG-42', 10);
+SQL> INSERT INTO Uses VALUES('LordBeerus', 'Lee Enfield', 24);
+SQL> INSERT INTO Uses VALUES('WhisMaster', 'M1903', 27);
+SQL> INSERT INTO Uses VALUES('Crimson_Chin', 'Type 100', 20);
+SQL> INSERT INTO Uses VALUES('BasedGod', 'MP-40', 23);
+SQL> INSERT INTO Uses VALUES('ReignGod', 'Type 100', 18);
+SQL> INSERT INTO Uses VALUES('PceMaker', 'PPSH-41', 15);
+SQL> INSERT INTO Uses VALUES('KillMonger', 'M1A1 Carbine', 9);
+SQL> INSERT INTO Uses VALUES('RelicStar', 'MP-40', 21);
+SQL> INSERT INTO Uses VALUES('NightStar', 'PPSH-41', 16);
+SQL> INSERT INTO Uses VALUES('DeathStar', 'PPSH-41', 16);
+SQL> INSERT INTO Uses VALUES('ReamStar', 'MP-40', 22);
+SQL> INSERT INTO Uses VALUES('MoonStar', 'BAR', 4);
+SQL> INSERT INTO Uses VALUES('GenoStar', 'M1-Garand', 3);
+SQL> INSERT INTO Uses VALUES('Unique_Epsilon', 'M1-Garand', 2);
+SQL> INSERT INTO Uses VALUES('Unique_Merciless', 'M1-Garand', 1);
+SQL> INSERT INTO Uses VALUES('Unique_Heartless', 'M1A1 Carbine', 7);
+SQL> INSERT INTO Uses VALUES('Unique_Sorrow', 'Grease Gun', 14);
+SQL> INSERT INTO Uses VALUES('BitterTetra', 'Type 100', 18);
+SQL> INSERT INTO Uses VALUES('Bitter_Vision', 'M1903', 26);
+SQL> INSERT INTO Uses VALUES('BitterGhost', 'Lee Enfield', 25);
+SQL> INSERT INTO Uses VALUES('BitterSweet', 'Kar98k', 28);
+SQL> --
+SQL> SET FEEDBACK ON
+SQL> COMMIT;
+
+Commit complete.
+
+SQL> --
+SQL> /* One query (per table) of the form: SELECT * FROM table;
+SQL> in order to print out your database
+SQL> */
+SQL> SELECT * FROM Team;
+
+       TID TNAME                NUMMEMBERS       SEED                           
+---------- -------------------- ---------- ----------                           
+         1 Team Awesome                  4          4                           
+         2 Ultra Instinct                4          6                           
+         3 Children of God               5          5                           
+         4 TrickStars                    6          1                           
+         5 UniqueGaming                  4          2                           
+         6 BitterGaming                  4          3                           
+
+6 rows selected.
+
+SQL> SELECT * FROM Player;
+
+PID                       PTEAM                PAGE  PNAME                      
+------------------------- -------------------- ----- --------------------       
+       TID ROLE                                                                 
+---------- ---------------                                                      
+HufflePuff                Team Awesome         22    Trevor James               
+         1 Captain                                                              
+                                                                                
+AznPersuasion             Team Awesome         20    Kevin Lin                  
+         1 Support                                                              
+                                                                                
+NoobSlayer                Team Awesome         19    Josh Front                 
+         1 Slayer                                                               
+                                                                                
+
+PID                       PTEAM                PAGE  PNAME                      
+------------------------- -------------------- ----- --------------------       
+       TID ROLE                                                                 
+---------- ---------------                                                      
+DoughBoy                  Team Awesome         18    Micah Danah                
+         1 Objective                                                            
+                                                                                
+SSGodGoku                 Ultra Instinct       22    Akira Toriyama             
+         2 Captain                                                              
+                                                                                
+SSGodVegeta               Ultra Instinct       19    Dan Shisuki                
+         2 Objective                                                            
+                                                                                
+
+PID                       PTEAM                PAGE  PNAME                      
+------------------------- -------------------- ----- --------------------       
+       TID ROLE                                                                 
+---------- ---------------                                                      
+LordBeerus                Ultra Instinct       18    Sam Sizuki                 
+         2 Support                                                              
+                                                                                
+WhisMaster                Ultra Instinct       19    Kyle Takanawa              
+         2 Slayer                                                               
+                                                                                
+Crimson_Chin              Children of God      21    Carlos Davila              
+         3 Coach                                                                
+                                                                                
+
+PID                       PTEAM                PAGE  PNAME                      
+------------------------- -------------------- ----- --------------------       
+       TID ROLE                                                                 
+---------- ---------------                                                      
+BasedGod                  Children Of God      19    Bob Gordon                 
+         3 Captain                                                              
+                                                                                
+ReignGod                  Children Of God      20    Karl Thornapple            
+         3 Slayer                                                               
+                                                                                
+PceMaker                  Children Of God      19    Casey Jimenez              
+         3 Objective                                                            
+                                                                                
+
+PID                       PTEAM                PAGE  PNAME                      
+------------------------- -------------------- ----- --------------------       
+       TID ROLE                                                                 
+---------- ---------------                                                      
+KillMonger                Children Of God      22    Chris Smith                
+         3 Support                                                              
+                                                                                
+RelicStar                 TrickStars           25    David Martinez             
+         4 Coach                                                                
+                                                                                
+NightStar                 TrickStars           24    Gregory Nelson             
+         4 Co-Captain                                                           
+                                                                                
+
+PID                       PTEAM                PAGE  PNAME                      
+------------------------- -------------------- ----- --------------------       
+       TID ROLE                                                                 
+---------- ---------------                                                      
+DeathStar                 TrickStars           24    Seth Palmer                
+         4 Co-Captain                                                           
+                                                                                
+ReamStar                  TrickStars           23    Sam Smith                  
+         4 Support                                                              
+                                                                                
+MoonStar                  TrickStars           22    Logan Wreath               
+         4 Objective                                                            
+                                                                                
+
+PID                       PTEAM                PAGE  PNAME                      
+------------------------- -------------------- ----- --------------------       
+       TID ROLE                                                                 
+---------- ---------------                                                      
+GenoStar                  TrickStars           19    Kevin Garner               
+         4 Slayer                                                               
+                                                                                
+Unique_Epsilon            UniqueGaming         20    Conrad Newman              
+         5 Captain                                                              
+                                                                                
+Unique_Merciless          UniqueGaming         21    Joe Puma                   
+         5 Slayer                                                               
+                                                                                
+
+PID                       PTEAM                PAGE  PNAME                      
+------------------------- -------------------- ----- --------------------       
+       TID ROLE                                                                 
+---------- ---------------                                                      
+Unique_Heartless          UniqueGaming         22    Trung Pham                 
+         5 Objective                                                            
+                                                                                
+Unique_Sorrow             UniqueGaming         21    Thao Phan                  
+         5 Slayer                                                               
+                                                                                
+BitterTetra               BitterGaming         18    Edward Elric               
+         6 Captain                                                              
+                                                                                
+
+PID                       PTEAM                PAGE  PNAME                      
+------------------------- -------------------- ----- --------------------       
+       TID ROLE                                                                 
+---------- ---------------                                                      
+Bitter_Vision             BitterGaming         20    Brandon Nguyen             
+         6 Slayer                                                               
+                                                                                
+BitterGhost               BitterGaming         22    Jubentino Cifuentes        
+         6 Objective                                                            
+                                                                                
+BitterSweet               BitterGaming         23    Joshua Norton              
+         6 Support                                                              
+                                                                                
+
+27 rows selected.
+
+SQL> SELECT * FROM Weapons;
+
+WNAME           WTYPE                                                           
+--------------- ----------------                                                
+ACCESSORIES                                                                     
+--------------------------------------------------                              
+M1-Garand       Assault Rifle                                                   
+Red Dot Sight, Quickdraw, and Stock                                             
+                                                                                
+BAR             Assault Rifle                                                   
+Extended Mag, Foregrip, and Stock                                               
+                                                                                
+M1A1 Carbine    Assault Rifle                                                   
+Silencer, Foregrip, and Extended Mag                                            
+                                                                                
+
+WNAME           WTYPE                                                           
+--------------- ----------------                                                
+ACCESSORIES                                                                     
+--------------------------------------------------                              
+FG-42           Assault Rifle                                                   
+Red Dot Sight, Bayonet, and Quickdraw                                           
+                                                                                
+Grease Gun      Submachine Gun                                                  
+Red Dot Sight and Stock                                                         
+                                                                                
+PPSH-41         Submachine Gun                                                  
+Quickdraw, Foregrip, and Stock                                                  
+                                                                                
+
+WNAME           WTYPE                                                           
+--------------- ----------------                                                
+ACCESSORIES                                                                     
+--------------------------------------------------                              
+Type 100        Submachine Gun                                                  
+Quickdraw, Silencer, and Foregrip                                               
+                                                                                
+MP-40           Submachine Gun                                                  
+Extended Mag, High Caliber Bullets, and Stock                                   
+                                                                                
+Lee Enfield     Sniper Rifle                                                    
+4x Optic and Advanced Rifling                                                   
+                                                                                
+
+WNAME           WTYPE                                                           
+--------------- ----------------                                                
+ACCESSORIES                                                                     
+--------------------------------------------------                              
+M1903           Sniper Rifle                                                    
+6x Optic and Advanced Rifling                                                   
+                                                                                
+Kar98k          Sniper Rifle                                                    
+4x Optic                                                                        
+                                                                                
+
+11 rows selected.
+
+SQL> SELECT * FROM Venue;
+
+       VID LOCATION                    CAPACITY                                 
+---------- ------------------------- ----------                                 
+       101 Anaheim                        15000                                 
+       102 Las Vegas                      20000                                 
+       103 Philadelphia                   25000                                 
+       104 New York City                  30000                                 
+
+4 rows selected.
+
+SQL> SELECT * FROM Match;
+
+      TID1       TID2 MDATE     MTIME      ATTENDANCE     SCORE1     SCORE2     
+---------- ---------- --------- ---------- ---------- ---------- ----------     
+       VID                                                                      
+----------                                                                      
+         1          2 07-APR-18 10:00am         10000          2          4     
+       101                                                                      
+                                                                                
+         3          4 08-APR-18 12:00pm         12000          1          4     
+       101                                                                      
+                                                                                
+         5          6 10-APR-18 12:00pm         17000          4          3     
+       102                                                                      
+                                                                                
+
+      TID1       TID2 MDATE     MTIME      ATTENDANCE     SCORE1     SCORE2     
+---------- ---------- --------- ---------- ---------- ---------- ----------     
+       VID                                                                      
+----------                                                                      
+         2          4 11-APR-18 12:00pm         23000          4          0     
+       103                                                                      
+                                                                                
+         2          5 12-APR-18 5:00pm          30000          4          3     
+       104                                                                      
+                                                                                
+
+5 rows selected.
+
+SQL> SELECT * FROM Weapon_Accessories;
+
+WNAME           ACCESSORIES                     WNUM                            
+--------------- ------------------------- ----------                            
+M1-Garand       Red Dot Sight                      1                            
+M1-Garand       Quickdraw                          2                            
+M1-Garand       Stock                              3                            
+BAR             Extended Mag                       4                            
+BAR             Foregrip                           5                            
+BAR             Stock                              6                            
+M1A1 Carbine    Silencer, Foregrip                 7                            
+M1A1 Carbine    Foregrip                           8                            
+M1A1 Carbine    Extended Mag                       9                            
+FG-42           Red Dot Sight                     10                            
+FG-42           Bayonet                           11                            
+
+WNAME           ACCESSORIES                     WNUM                            
+--------------- ------------------------- ----------                            
+FG-42           Quickdraw                         12                            
+Grease Gun      Red Dot Sight                     13                            
+Grease Gun      Stock                             14                            
+PPSH-41         Quickdraw                         15                            
+PPSH-41         Foregrip                          16                            
+PPSH-41         Stock                             17                            
+Type 100        Quickdraw                         18                            
+Type 100        Silencer                          19                            
+Type 100        Foregrip                          20                            
+MP-40           Extended Mag                      21                            
+MP-40           High Caliber Bullets              22                            
+
+WNAME           ACCESSORIES                     WNUM                            
+--------------- ------------------------- ----------                            
+MP-40           Stock                             23                            
+Lee Enfield     4x Optic                          24                            
+Lee Enfield     Advanced Rifling                  25                            
+M1903           6x Optic                          26                            
+M1903           Advanced Rifling                  27                            
+Kar98k          4x Optic                          28                            
+
+28 rows selected.
+
+SQL> SELECT * FROM Uses;
+
+PID                       WNAME                 WNUM                            
+------------------------- --------------- ----------                            
+Hufflepuff                Type 100                19                            
+AznPersuasion             PPSH-41                 17                            
+NoobSlayer                BAR                      6                            
+DoughBoy                  BAR                      5                            
+SSGodGoku                 FG-42                   11                            
+SSGodVegeta               FG-42                   10                            
+LordBeerus                Lee Enfield             24                            
+WhisMaster                M1903                   27                            
+Crimson_Chin              Type 100                20                            
+BasedGod                  MP-40                   23                            
+ReignGod                  Type 100                18                            
+
+PID                       WNAME                 WNUM                            
+------------------------- --------------- ----------                            
+PceMaker                  PPSH-41                 15                            
+KillMonger                M1A1 Carbine             9                            
+RelicStar                 MP-40                   21                            
+NightStar                 PPSH-41                 16                            
+DeathStar                 PPSH-41                 16                            
+ReamStar                  MP-40                   22                            
+MoonStar                  BAR                      4                            
+GenoStar                  M1-Garand                3                            
+Unique_Epsilon            M1-Garand                2                            
+Unique_Merciless          M1-Garand                1                            
+Unique_Heartless          M1A1 Carbine             7                            
+
+PID                       WNAME                 WNUM                            
+------------------------- --------------- ----------                            
+Unique_Sorrow             Grease Gun              14                            
+BitterTetra               Type 100                18                            
+Bitter_Vision             M1903                   26                            
+BitterGhost               Lee Enfield             25                            
+BitterSweet               Kar98k                  28                            
+
+27 rows selected.
+
+SQL> --
+SQL> /* The SQL queries>. Include the following for each query:
+SQL> 1. A comment line stating the query number and the feature(s) it demonstrates
+SQL> (e.g. – Q25 – correlated subquery).
+SQL> 2. A comment line stating the query in English.
+SQL> 3. The SQL code for the query.
+SQL> */
+SQL> --
+SQL> -- QUERY 1: A join involving at least four relations.
+SQL> -- For every team that has a match in 'New York City', and is the first Team entered,
+SQL> -- find the team name, player iDs, player names, and roles of player in match
+SQL> SELECT DISTINCT T.tID, P.pID, P.pAge, P.role
+  2  FROM Player P, Venue V, Team T, Match M
+  3  WHERE  P.tId = T.tID AND
+  4  	    T.tID = M.tID1 AND
+  5  	    M.vID = V.vID AND
+  6  	    V.location = 'New York City'
+  7  ORDER BY T.tID;
+
+       TID PID                       PAGE  ROLE                                 
+---------- ------------------------- ----- ---------------                      
+         2 LordBeerus                18    Support                              
+         2 SSGodGoku                 22    Captain                              
+         2 SSGodVegeta               19    Objective                            
+         2 WhisMaster                19    Slayer                               
+
+4 rows selected.
+
+SQL> --
+SQL> -- QUERY 2: A self-join
+SQL> --Finds pairs of players on the same team with the same roles
+SQL> SELECT DISTINCT P1.pID, P2.pID
+  2  FROM Player P1, Player P2
+  3  WHERE P1.role = P2.role AND
+  4  	   P1.pTeam = P2.pTeam AND
+  5  	   P1.pName < P2.pName;
+
+PID                       PID                                                   
+------------------------- -------------------------                             
+NightStar                 DeathStar                                             
+Unique_Merciless          Unique_Sorrow                                         
+
+2 rows selected.
+
+SQL> --
+SQL> -- QUERY 3: UNION, INTERSECT, and/or MINUS.
+SQL> --For any team that is in the top 2 seed or hasa coach, find the
+SQL> -- tId and tName
+SQL> SELECT T.tID, T.tName
+  2  FROM Team T
+  3  WHERE T.seed < 3
+  4  UNION
+  5  SELECT T.tID, T.tName
+  6  FROM Team T, Player P
+  7  WHERE T.tID = P.tID AND
+  8  	   P.role = 'Coach';
+
+       TID TNAME                                                                
+---------- --------------------                                                 
+         3 Children of God                                                      
+         4 TrickStars                                                           
+         5 UniqueGaming                                                         
+
+3 rows selected.
+
+SQL> --
+SQL> -- QUERY 4: SUM, AVG, MAX, and/or MIN.
+SQL> --Finds all teams that have more than 4 members on a team
+SQL> SELECT T.tName, T.numMembers
+  2  FROM team T
+  3  WHERE T.numMembers > (SELECT AVG(numMembers)
+  4  				  FROM team)
+  5  ORDER BY T.tName;
+
+TNAME                NUMMEMBERS                                                 
+-------------------- ----------                                                 
+Children of God               5                                                 
+TrickStars                    6                                                 
+
+2 rows selected.
+
+SQL> --
+SQL> --QUERY 5: GROUP BY, HAVING, and ORDER BY, all appearing in the same query
+SQL> --Finds all venues that have more than 1 match scheduled at that location
+SQL> SELECT V.vID, V.location, count(*) AS "MATCHES SCHEDULED"
+  2  FROM Match M, Venue V
+  3  WHERE M.vID = V.vID
+  4  GROUP BY V.vID, V.location
+  5  HAVING count(*) > 1
+  6  ORDER BY V.vID;
+
+       VID LOCATION                  MATCHES SCHEDULED                          
+---------- ------------------------- -----------------                          
+       101 Anaheim                                   2                          
+
+1 row selected.
+
+SQL> --
+SQL> -- QUERY 6: A correlated subquery.
+SQL> --Find all locations that have at least one match scheduled
+SQL> SELECT V.vID, V.location
+  2  FROM Venue V
+  3  WHERE EXISTS (SELECT *
+  4  		   FROM Match M
+  5  		   WHERE V.vID = M.vID)
+  6  ORDER BY V.vID;
+
+       VID LOCATION                                                             
+---------- -------------------------                                            
+       101 Anaheim                                                              
+       102 Las Vegas                                                            
+       103 Philadelphia                                                         
+       104 New York City                                                        
+
+4 rows selected.
+
+SQL> --
+SQL> -- QUERY 7: A non-correlated subquery.
+SQL> --Find the team ID and name of a team who did not enter a match as the tID1
+SQL> SELECT T.tID, T.tName
+  2  FROM Team T
+  3  WHERE T.tID NOT IN(SELECT M.tID1
+  4  		   FROM Match M);
+
+       TID TNAME                                                                
+---------- --------------------                                                 
+         6 BitterGaming                                                         
+         4 TrickStars                                                           
+
+2 rows selected.
+
+SQL> --
+SQL> -- QUERY 8: A relational DIVISION query.
+SQL> --Find all players who are on a team that has at least 4 members and has never lost a game as Team 1.
+SQL> SELECT P.pName, P.tID
+  2  FROM Player P
+  3  WHERE NOT EXISTS(
+  4  	     (SELECT T.tID
+  5  	      FROM Team T
+  6  	      WHERE P.pTeam = T.tName AND
+  7  		    T.numMembers >= 4)
+  8  	     MINUS
+  9  	     (SELECT M.tID1
+ 10  	      FROM Match M
+ 11  	      WHERE M.score1 > M.score2));
+
+PNAME                       TID                                                 
+-------------------- ----------                                                 
+Akira Toriyama                2                                                 
+Dan Shisuki                   2                                                 
+Sam Sizuki                    2                                                 
+Kyle Takanawa                 2                                                 
+Bob Gordon                    3                                                 
+Karl Thornapple               3                                                 
+Casey Jimenez                 3                                                 
+Chris Smith                   3                                                 
+Conrad Newman                 5                                                 
+Joe Puma                      5                                                 
+Trung Pham                    5                                                 
+
+PNAME                       TID                                                 
+-------------------- ----------                                                 
+Thao Phan                     5                                                 
+
+12 rows selected.
+
+SQL> --
+SQL> -- QUERY 9: An outer join query
+SQL> -- Find the Venue ID, location, match date, and time for every possible match
+SQL> SELECT V.vID, V.location, M.mDate, M.mTime
+  2  FROM Venue V LEFT OUTER JOIN Match M ON V.vID = M.vID;
+
+       VID LOCATION                  MDATE     MTIME                            
+---------- ------------------------- --------- ----------                       
+       101 Anaheim                   07-APR-18 10:00am                          
+       101 Anaheim                   08-APR-18 12:00pm                          
+       102 Las Vegas                 10-APR-18 12:00pm                          
+       103 Philadelphia              11-APR-18 12:00pm                          
+       104 New York City             12-APR-18 5:00pm                           
+
+5 rows selected.
+
+SQL> --
+SQL> -- QUERY 10: Rank query
+SQL> --Finds the rank (not dense) of each player based on attendance.
+SQL> -- HINT (Should be 1)
+SQL> SELECT RANK(30000) WITHIN GROUP
+  2  (ORDER BY attendance DESC)
+  3  FROM Match;
+
+RANK(30000)WITHINGROUP(ORDERBYATTENDANCEDESC)                                   
+---------------------------------------------                                   
+                                            1                                   
+
+1 row selected.
+
+SQL> --
+SQL> -- QUERY 11: A Top-N query
+SQL> --Finds the three oldest players by descending order.
+SQL> SELECT pName, pAge
+  2  FROM (SELECT * FROM Player ORDER BY pAge DESC)
+  3  WHERE ROWNUM < 4;
+
+PNAME                PAGE                                                       
+-------------------- -----                                                      
+David Martinez       25                                                         
+Gregory Nelson       24                                                         
+Seth Palmer          24                                                         
+
+3 rows selected.
+
+SQL> --
+SQL> /*The insert/delete/update statements to test the enforcement of ICs >
+
+PNAME                PAGE                                                       
+-------------------- -----                                                      
+David Martinez       25                                                         
+Gregory Nelson       24                                                         
+Seth Palmer          24                                                         
+
+3 rows selected.
+
+SQL> Include the following items for every IC that you test (Important: see the next section titled
+SP2-0734: unknown command beginning "Include th..." - rest of line ignored.
+SQL> “Submit a final report” regarding which ICs to test).
+SP2-0734: unknown command beginning "“Submit ..." - rest of line ignored.
+SQL> 1. A comment line stating: Testing: < IC name>
+SP2-0734: unknown command beginning "1. A comme..." - rest of line ignored.
+SQL> 2.  A SQL INSERT, DELETE, or UPDATE that will test the IC.
+SP2-0734: unknown command beginning "2.  A SQL ..." - rest of line ignored.
+SP2-0044: For a list of known commands enter HELP
+and to leave enter EXIT.
+SQL> */
+SP2-0042: unknown command "*/" - rest of line ignored.
+SQL> --
+SQL> -- Testing constraint pIC1
+SQL> INSERT INTO Player VALUES('HufflePuff', 'Team Awesome', 24, 'Trevor James', 1, 'Captain');
+INSERT INTO Player VALUES('HufflePuff', 'Team Awesome', 24, 'Trevor James', 1, 'Captain')
+*
+ERROR at line 1:
+ORA-00001: unique constraint (PHAMTRU.PIC1) violated 
+
+
+SQL> -- Testing constraint mIC3
+SQL> INSERT INTO Match VALUES(1, 2, '07-APR-18', '10:00am', 17000, 2, 4, 101);
+INSERT INTO Match VALUES(1, 2, '07-APR-18', '10:00am', 17000, 2, 4, 101)
+*
+ERROR at line 1:
+ORA-02290: check constraint (PHAMTRU.MIC3) violated 
+
+
+SQL> -- Testing constraint mIC2
+SQL> DELETE FROM Venue WHERE vID = 101;
+
+1 row deleted.
+
+SQL> SELECT vID FROM Match;
+
+       VID                                                                      
+----------                                                                      
+       102                                                                      
+       103                                                                      
+       104                                                                      
+
+3 rows selected.
+
+SQL> SELECT vID FROM Venue;
+
+       VID                                                                      
+----------                                                                      
+       102                                                                      
+       103                                                                      
+       104                                                                      
+
+3 rows selected.
+
+SQL> -- Testing constraint tIC3
+SQL> INSERT INTO Team VALUES (7, 'DreamTeam', 8, 7);
+INSERT INTO Team VALUES (7, 'DreamTeam', 8, 7)
+*
+ERROR at line 1:
+ORA-02290: check constraint (PHAMTRU.TIC3) violated 
+
+
+SQL> --
+SQL> COMMIT;
+
+Commit complete.
+
+SQL> SPOOL OFF
